@@ -93,11 +93,11 @@ class CNNLSTM(nn.Module):
 
         return x
 
-class CNNAttention(nn.Module):
+class ConvLSTMAttention(nn.Module):
     def __init__(self, num_attention_heads=4):
-        super(CNNAttention, self).__init__()
-        
-        # Conv layers
+        super(ConvLSTMAttention, self).__init__()
+
+        # 1D Convolutional Layers
         self.conv1 = nn.Sequential(
             nn.Conv1d(in_channels=1, out_channels=16, kernel_size=16, stride=8),
             nn.BatchNorm1d(16),
@@ -108,51 +108,37 @@ class CNNAttention(nn.Module):
             nn.BatchNorm1d(32),
             nn.ReLU(inplace=True)
         )
-        self.conv3 = nn.Sequential(
-            nn.Conv1d(in_channels=32, out_channels=64, kernel_size=4, stride=2),
-            nn.BatchNorm1d(64),
-            nn.ReLU(inplace=True)
-        )
-        
-        # Multi-Head Self-Attention Layer
-        self.attention = nn.MultiheadAttention(embed_dim=64, num_heads=num_attention_heads)
-        
-        # Calculate the input dimension for the first linear layer
-        input_dim = self.calculate_input_dimension(10000)
-        
-        # Linear layers
-        self.fc1 = nn.Linear(input_dim, 128)  # Input size calculated based on input signal length
-        self.fc2 = nn.Linear(128, 1)  # Output a single number
 
-    def calculate_input_dimension(self, input_length):
-        # Calculate the output sequence length after the convolutional layers
-        conv1_output_length = ((input_length - 16) // 8) + 1
-        conv2_output_length = ((conv1_output_length - 8) // 4) + 1
-        conv3_output_length = ((conv2_output_length - 4) // 2) + 1
-        
-        # Calculate the input dimension for the first linear layer
-        input_dim = 64 * conv3_output_length
-        
-        return input_dim
+        # Bidirectional LSTM layers
+        self.lstm = nn.LSTM(input_size=32, hidden_size=256, num_layers=2, bidirectional=True, batch_first=True)
+
+        # Multi-Head Self-Attention Layer
+        self.attention = nn.MultiheadAttention(embed_dim=512, num_heads=num_attention_heads)
+
+        # Linear layers
+        self.fc1 = nn.Linear(512, 128)  # Input size: 512 (bidirectional LSTM output)
+        self.fc2 = nn.Linear(128, 1)    # Output a single number
 
     def forward(self, x):
-        # Conv layers
+        # 1D Convolutional Layers
         x = self.conv1(x)
         x = self.conv2(x)
-        x = self.conv3(x)
-        
-        x = x.permute(2, 0, 1)  # Change channel dimension to match Multi-Head Attention input sizeß
-        
-        # Multi-Head Attention Layer
-        x, _ = self.attention(x, x, x)
-        
-        # Flatten
-        x = x.view(x.size(1), -1)  # Reshape for fully connected layers
-        
+
+        # Reshape the output to match LSTM input size
+        x = x.permute(0, 2, 1)
+        lstm_out, _ = self.lstm(x)
+
+        # Multi-Head Self-Attention Layer
+        x, _ = self.attention(lstm_out, lstm_out, lstm_out)
+
+        # Global average pooling along the time axis
+        x = torch.mean(x, dim=1)
+
         # Linear layers
         x = self.fc1(x)
         x = torch.relu(x)
         x = self.fc2(x)
+
         return x
 
 # Dense Neural Network
