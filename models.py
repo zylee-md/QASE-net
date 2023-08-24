@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-# Convolutional Neural Network for 1D data
+# Convolutional Neural Network
 class CNN1d(nn.Module):
     def __init__(self):
         super(CNN1d, self).__init__()
@@ -80,7 +80,7 @@ class CNNLSTM(nn.Module):
         x = self.conv2(x)
         
         # Reshape the output to match LSTM input size
-        x = x.permute(0, 2, 1)  # Change channel dimension to match LSTM input
+        x = x.permute(0, 2, 1)
         lstm_out, _ = self.lstm(x)
         
         # Global average pooling along the time axis
@@ -136,14 +136,14 @@ class CNNAttention(nn.Module):
         return input_dim
 
     def forward(self, x):
+        # Conv layers
         x = self.conv1(x)
         x = self.conv2(x)
         x = self.conv3(x)
         
-        # Reshape the output for Multi-Head Self-Attention
-        x = x.permute(2, 0, 1)  # Change channel dimension to match Multi-Head Self-Attention input
+        x = x.permute(2, 0, 1)  # Change channel dimension to match Multi-Head Attention input sizeß
         
-        # Multi-Head Self-Attention Layer
+        # Multi-Head Attention Layer
         x, _ = self.attention(x, x, x)
         
         # Flatten
@@ -153,11 +153,9 @@ class CNNAttention(nn.Module):
         x = self.fc1(x)
         x = torch.relu(x)
         x = self.fc2(x)
-
         return x
 
-
-# Deep Neural Network
+# Dense Neural Network
 class DNN(nn.Module):
     def __init__(self):
         super(DNN, self).__init__()
@@ -174,7 +172,7 @@ class DNN(nn.Module):
         x = self.output(x)
         return x
 
-# Deep Neural Network that takes WL as input
+# Dense Neural Network that takes WL as input
 class WLDNN(nn.Module):
     def __init__(self, input_length):
         super(WLDNN, self).__init__()
