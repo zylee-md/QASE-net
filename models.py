@@ -93,9 +93,9 @@ class CNNLSTM(nn.Module):
 
         return x
 
-class ConvLSTMAttention(nn.Module):
-    def __init__(self, num_attention_heads=4):
-        super(ConvLSTMAttention, self).__init__()
+class CNNLSTMAttention(nn.Module):
+    def __init__(self, num_attention_heads=2):
+        super(CNNLSTMAttention, self).__init__()
 
         # 1D Convolutional Layers
         self.conv1 = nn.Sequential(
@@ -113,7 +113,7 @@ class ConvLSTMAttention(nn.Module):
         self.lstm = nn.LSTM(input_size=32, hidden_size=256, num_layers=2, bidirectional=True, batch_first=True)
 
         # Multi-Head Self-Attention Layer
-        self.attention = nn.MultiheadAttention(embed_dim=512, num_heads=num_attention_heads)
+        self.attention = nn.MultiheadAttention(embed_dim=512, num_heads=num_attention_heads, batch_first=True)
 
         # Linear layers
         self.fc1 = nn.Linear(512, 128)  # Input size: 512 (bidirectional LSTM output)
@@ -139,23 +139,6 @@ class ConvLSTMAttention(nn.Module):
         x = torch.relu(x)
         x = self.fc2(x)
 
-        return x
-
-# Dense Neural Network
-class DNN(nn.Module):
-    def __init__(self):
-        super(DNN, self).__init__()
-        self.linear1 = nn.Linear(10000, 256)
-        self.linear2 = nn.Linear(256, 256)
-        self.output = nn.Linear(256, 1)
-        self.relu = nn.ReLU()
-        
-    def forward(self, x):
-        x = self.linear1(x)
-        x = self.relu(x)
-        x = self.linear2(x)
-        x = self.relu(x)
-        x = self.output(x)
         return x
 
 # Dense Neural Network that takes WL as input
