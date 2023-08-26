@@ -1,12 +1,9 @@
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 
-# Convolutional Neural Network
 class CNN1d(nn.Module):
     def __init__(self):
         super(CNN1d, self).__init__()
-        # Conv layers
         self.conv1 = nn.Sequential(
             nn.Conv1d(in_channels=1, out_channels=16, kernel_size=16, stride=8),
             nn.BatchNorm1d(16),
@@ -18,45 +15,34 @@ class CNN1d(nn.Module):
             nn.ReLU(inplace=True)
         )
         self.conv3 = nn.Sequential(
-            nn.Conv1d(in_channels=32, out_channels=64, kernel_size=8, stride=4),
+            nn.Conv1d(in_channels=32, out_channels=64, kernel_size=4, stride=2),
             nn.BatchNorm1d(64),
             nn.ReLU(inplace=True)
         )
         self.conv4 = nn.Sequential(
-            nn.Conv1d(in_channels=64, out_channels=128, kernel_size=4, stride=2),
+            nn.Conv1d(in_channels=64, out_channels=128, kernel_size=2, stride=1),
             nn.BatchNorm1d(128),
             nn.ReLU(inplace=True)
         )
-        self.conv5 = nn.Sequential(
-            nn.Conv1d(in_channels=128, out_channels=256, kernel_size=4, stride=2),
-            nn.BatchNorm1d(256),
-            nn.ReLU(inplace=True)
-        )
-
-        self.avg_pool = nn.AdaptiveAvgPool1d(1)  # Pool to 1 feature along the time axis
         
         self.relu = nn.ReLU(inplace=True)
-        self.fc1 = nn.Linear(256, 128)  # Adjust input size
-        self.fc2 = nn.Linear(128, 1)
+        self.fc1 = nn.Linear(128, 64)
+        self.fc2 = nn.Linear(64, 1)
 
     def forward(self, x):
         x = self.conv1(x)
         x = self.conv2(x)
         x = self.conv3(x)
         x = self.conv4(x)
-        x = self.conv5(x)
-        # Apply average pooling along the time axis
-        x = self.avg_pool(x)
-        x = x.view(x.size(0), -1)
-        x = self.relu(self.fc1(x))
+        x = torch.mean(x, dim=2)
+        x = self.fc1(x)
+        x = self.relu(x)
         x = self.fc2(x)
         return x
 
-# Convolutional Neural Network with Bidirectional LSTM
-class CNNLSTM(nn.Module):
+class CNNBLSTM(nn.Module):
     def __init__(self):
-        super(CNNLSTM, self).__init__()
-        # Conv layers
+        super(CNNBLSTM, self).__init__()
         self.conv1 = nn.Sequential(
             nn.Conv1d(in_channels=1, out_channels=16, kernel_size=16, stride=8),
             nn.BatchNorm1d(16),
@@ -67,81 +53,97 @@ class CNNLSTM(nn.Module):
             nn.BatchNorm1d(32),
             nn.ReLU(inplace=True)
         )
-        
-        # Bidirectional LSTM layers
-        self.lstm = nn.LSTM(input_size=32, hidden_size=256, num_layers=2, bidirectional=True, batch_first=True)
-
-        # Linear layers
-        self.fc1 = nn.Linear(512, 128)  # Input size: 512 (bidirectional LSTM output)
-        self.fc2 = nn.Linear(128, 1)    # Output a single number
+        self.conv3 = nn.Sequential(
+            nn.Conv1d(in_channels=32, out_channels=128, kernel_size=4, stride=2),
+            nn.BatchNorm1d(128),
+            nn.ReLU(inplace=True)
+        )
+        self.lstm = nn.LSTM(input_size=128, hidden_size=64, num_layers=1, bidirectional=True, batch_first=True)
+        self.fc1 = nn.Linear(128, 64)
+        self.fc2 = nn.Linear(64, 1)
 
     def forward(self, x):
         x = self.conv1(x)
         x = self.conv2(x)
-        
-        # Reshape the output to match LSTM input size
+        x = self.conv3(x)
         x = x.permute(0, 2, 1)
-        lstm_out, _ = self.lstm(x)
-        
-        # Global average pooling along the time axis
-        x = torch.mean(lstm_out, dim=1)
-
-        # Linear layers
-        x = self.fc1(x)
-        x = torch.relu(x)
-        x = self.fc2(x)
-
-        return x
-
-class CNNLSTMAttention(nn.Module):
-    def __init__(self, num_attention_heads=2):
-        super(CNNLSTMAttention, self).__init__()
-
-        # 1D Convolutional Layers
-        self.conv1 = nn.Sequential(
-            nn.Conv1d(in_channels=1, out_channels=16, kernel_size=16, stride=8),
-            nn.BatchNorm1d(16),
-            nn.ReLU(inplace=True)
-        )
-        self.conv2 = nn.Sequential(
-            nn.Conv1d(in_channels=16, out_channels=32, kernel_size=8, stride=4),
-            nn.BatchNorm1d(32),
-            nn.ReLU(inplace=True)
-        )
-
-        # Bidirectional LSTM layers
-        self.lstm = nn.LSTM(input_size=32, hidden_size=256, num_layers=2, bidirectional=True, batch_first=True)
-
-        # Multi-Head Self-Attention Layer
-        self.attention = nn.MultiheadAttention(embed_dim=512, num_heads=num_attention_heads, batch_first=True)
-
-        # Linear layers
-        self.fc1 = nn.Linear(512, 128)  # Input size: 512 (bidirectional LSTM output)
-        self.fc2 = nn.Linear(128, 1)    # Output a single number
-
-    def forward(self, x):
-        # 1D Convolutional Layers
-        x = self.conv1(x)
-        x = self.conv2(x)
-
-        # Reshape the output to match LSTM input size
-        x = x.permute(0, 2, 1)
-        lstm_out, _ = self.lstm(x)
-
-        # Multi-Head Self-Attention Layer
-        x, _ = self.attention(lstm_out, lstm_out, lstm_out)
-
-        # Global average pooling along the time axis
+        x, _ = self.lstm(x)
         x = torch.mean(x, dim=1)
-
-        # Linear layers
         x = self.fc1(x)
         x = torch.relu(x)
         x = self.fc2(x)
+        return x
+    
+class CNNATTN(nn.Module):
+    def __init__(self):
+        super(CNNATTN, self).__init__()
+        self.conv1 = nn.Sequential(
+            nn.Conv1d(in_channels=1, out_channels=16, kernel_size=16, stride=8),
+            nn.BatchNorm1d(16),
+            nn.ReLU(inplace=True)
+        )
+        self.conv2 = nn.Sequential(
+            nn.Conv1d(in_channels=16, out_channels=32, kernel_size=8, stride=4),
+            nn.BatchNorm1d(32),
+            nn.ReLU(inplace=True)
+        )
+        self.conv3 = nn.Sequential(
+            nn.Conv1d(in_channels=32, out_channels=128, kernel_size=4, stride=2),
+            nn.BatchNorm1d(128),
+            nn.ReLU(inplace=True)
+        )
+        self.attention = nn.MultiheadAttention(embed_dim=128, num_heads=2, batch_first=True)
+        self.fc1 = nn.Linear(128, 64)
+        self.fc2 = nn.Linear(64, 1)
 
+    def forward(self, x):
+        x = self.conv1(x)
+        x = self.conv2(x)
+        x = self.conv3(x)
+        x = x.permute(0, 2, 1)
+        x, _ = self.attention(x, x, x)
+        x = torch.mean(x, dim=1)
+        x = self.fc1(x)
+        x = torch.relu(x)
+        x = self.fc2(x)
+        return x    
+
+class CNNBLSTMATTN(nn.Module):
+    def __init__(self):
+        super(CNNBLSTMATTN, self).__init__()
+        self.conv1 = nn.Sequential(
+            nn.Conv1d(in_channels=1, out_channels=16, kernel_size=16, stride=8),
+            nn.BatchNorm1d(16),
+            nn.ReLU(inplace=True)
+        )
+        self.conv2 = nn.Sequential(
+            nn.Conv1d(in_channels=16, out_channels=32, kernel_size=8, stride=4),
+            nn.BatchNorm1d(32),
+            nn.ReLU(inplace=True)
+        )
+        self.conv3 = nn.Sequential(
+            nn.Conv1d(in_channels=32, out_channels=128, kernel_size=4, stride=2),
+            nn.BatchNorm1d(128),
+            nn.ReLU(inplace=True)
+        )
+        self.lstm = nn.LSTM(input_size=128, hidden_size=64, num_layers=1, bidirectional=True, batch_first=True)
+        self.attention = nn.MultiheadAttention(embed_dim=128, num_heads=2, batch_first=True)
+        self.fc1 = nn.Linear(128, 64)  
+        self.fc2 = nn.Linear(64, 1)
+
+    def forward(self, x):
+        x = self.conv1(x)
+        x = self.conv2(x)
+        x = self.conv3(x)
+        x = x.permute(0, 2, 1)
+        x, _ = self.lstm(x)
+        x, _ = self.attention(x, x, x)
+        x = torch.mean(x, dim=1)
+        x = self.fc1(x)
+        x = torch.relu(x)
+        x = self.fc2(x)
         return x
 
-# Dense Neural Network that takes WL as input
 class WLDNN(nn.Module):
     def __init__(self, input_length):
         super(WLDNN, self).__init__()
@@ -151,7 +153,9 @@ class WLDNN(nn.Module):
         self.sigmoid = nn.Sigmoid()
         
     def forward(self, x):
-        x = self.sigmoid(self.hidden1(x))
-        x = self.sigmoid(self.hidden2(x))
+        x = self.hidden1(x)
+        x = self.sigmoid(x)
+        x = self.hidden2(x)
+        x = self.sigmoid(x)
         x = self.output(x)
         return x
