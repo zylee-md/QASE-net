@@ -88,12 +88,12 @@ class CNNATTN(nn.Module):
             nn.ReLU(inplace=True)
         )
         self.conv3 = nn.Sequential(
-            nn.Conv1d(in_channels=32, out_channels=128, kernel_size=4, stride=2),
-            nn.BatchNorm1d(128),
+            nn.Conv1d(in_channels=32, out_channels=64, kernel_size=4, stride=2),
+            nn.BatchNorm1d(64),
             nn.ReLU(inplace=True)
         )
-        self.attention = nn.MultiheadAttention(embed_dim=128, num_heads=2, batch_first=True)
-        self.fc1 = nn.Linear(128, 64)
+        self.attention = nn.MultiheadAttention(embed_dim=64, num_heads=2, batch_first=True)
+        self.fc1 = nn.Linear(64, 64)
         self.fc2 = nn.Linear(64, 1)
 
     def forward(self, x):
@@ -107,7 +107,7 @@ class CNNATTN(nn.Module):
         x = torch.relu(x)
         x = self.fc2(x)
         return x    
-
+    
 class CNNBLSTMATTN(nn.Module):
     def __init__(self):
         super(CNNBLSTMATTN, self).__init__()
@@ -121,20 +121,14 @@ class CNNBLSTMATTN(nn.Module):
             nn.BatchNorm1d(32),
             nn.ReLU(inplace=True)
         )
-        self.conv3 = nn.Sequential(
-            nn.Conv1d(in_channels=32, out_channels=128, kernel_size=4, stride=2),
-            nn.BatchNorm1d(128),
-            nn.ReLU(inplace=True)
-        )
-        self.lstm = nn.LSTM(input_size=128, hidden_size=64, num_layers=1, bidirectional=True, batch_first=True)
-        self.attention = nn.MultiheadAttention(embed_dim=128, num_heads=2, batch_first=True)
+        self.lstm = nn.LSTM(input_size=32, hidden_size=64, num_layers=1, bidirectional=True, batch_first=True)
+        self.attention = nn.MultiheadAttention(embed_dim=128, num_heads=4, batch_first=True)
         self.fc1 = nn.Linear(128, 64)  
         self.fc2 = nn.Linear(64, 1)
 
     def forward(self, x):
         x = self.conv1(x)
         x = self.conv2(x)
-        x = self.conv3(x)
         x = x.permute(0, 2, 1)
         x, _ = self.lstm(x)
         x, _ = self.attention(x, x, x)
