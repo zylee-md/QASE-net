@@ -1,8 +1,8 @@
-# Deep Learning-based Signal-to-Noise Ratio Estimation for Single-Channel Surface EMG Signals Contaminated by ECG Interference
+# QASE-net: A Signal-to-Noise Ratio Prediction Model for Single-Channel Surface EMG Signals Contaminated by ECG Interference
 
-# Dataset
-1. ECG: [MIT-BIH Normal Sinus Rhythm Database](https://www.physionet.org/content/nsrdb/1.0.0/) 
-2. sEMG: [NINAPro database DB2](http://ninaweb.hevs.ch/node/17)
+# Open database
+1. ECG (noise): [MIT-BIH Normal Sinus Rhythm Database](https://www.physionet.org/content/nsrdb/1.0.0/) 
+2. sEMG (signal): [NINAPro database DB2](http://ninaweb.hevs.ch/node/17)
 
 # Directory Structure
 ```
