@@ -4,9 +4,10 @@
 1. sEMG (signal): [NINAPro database DB2](http://ninaweb.hevs.ch/node/17)
 2. ECG (noise): [MIT-BIH Normal Sinus Rhythm Database](https://www.physionet.org/content/nsrdb/1.0.0/) 
 
-
 # Directory Structure
 ```
+/EMG_DB2 (the EMG dataset)
+/mit-bih-normal-sinus-rhythm-database-1.0.0 (the ECG dataset)
 /SNR-Estimation-for-sEMG-Signals
 ├── data_E{i}_S{j}_Ch{k}_withSTI_seg{SEGMENT_SIZE}s_nsrd
 │   ...
@@ -28,3 +29,4 @@
 # Usage
 * Download the dataset from the link provided above
 * Run `extract_emg.py`, `extract_ecg.py`, and `generate_mixture.py` to generate training, testing, and validation data.
+* Run `train-{model_name}.ipynb` to train the models and `test-{model_name}.ipynb` to test them
