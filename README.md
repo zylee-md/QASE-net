@@ -30,7 +30,7 @@ In practical scenarios involving the measurement of surface electromyography (sE
 # Data Preparation
 * Download the dataset from the link provided above
 * Run `extract_emg.py` and `extract_ecg.py` to extract sEMG and ECG signals from the downloaded database
-* To generated contaminated sEMG signals, run `generate_mixture.py`
+* To generate contaminated sEMG signals, run `generate_mixture.py`
 
 # Model Training and Testing
 * Run `train-{model_name}.ipynb` to train the models and `test-{model_name}.ipynb` to test them
