@@ -69,7 +69,7 @@ del train_data, train_labels, val_data, val_labels
 gc.collect()
 
 # Create DataLoaders from the tensors
-batch_size = 128
+batch_size = 32
 # print("Creating DataLoaders...")
 
 train_dataset = TensorDataset(train_data_tensor, train_labels_tensor)
