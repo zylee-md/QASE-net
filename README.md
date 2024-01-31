@@ -33,4 +33,4 @@ In practical scenarios involving the measurement of surface electromyography (sE
 * To generate contaminated sEMG signals, run `generate_mixture.py`
 
 # Model Training and Testing
-* Run `train-{model_name}.ipynb` to train the models and `test-{model_name}.ipynb` to test them
+* Run `train_{model_name}.py` to train the models and `test_{model_name}.py` to test them
